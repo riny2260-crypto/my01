@@ -213,5 +213,6 @@ if menu == "이수증 업로드":
                             'name': new_filename,
                             'parents': [course_folder_id]
                         }
-                        media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype='application/pdf', resumable=True)
-                        drive_service.files().create(body=file_metadata, media_body=
+                        media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype='application/pdf',
+                                                  resumable=True)
+                        drive_service.files().create(body=file_metadata, media_body=media).execute()
