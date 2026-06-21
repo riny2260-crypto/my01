@@ -78,14 +78,4 @@ def get_or_create_drive_folder(service, folder_name, parent_id=None):
     items = results.get('files', [])
 
     if items:
-        return items[0]['id']
-    else:
-        file_metadata = {
-            'name': folder_name,
-            'mimeType': 'application/vnd.google-apps.folder'
-        }
-        if parent_id:
-            file_metadata['parents'] = [parent_id]
-        else:
-            file_metadata['parents'] = ['root']
-        folder = service.files().create(body=file_metadata, fields='
+        return items
