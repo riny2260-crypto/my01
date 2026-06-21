@@ -43,7 +43,8 @@ def get_gdrive_service():
                         "client_secret": st.secrets["gdrive_secrets"]["client_secret"],
                         "project_id": st.secrets["gdrive_secrets"]["project_id"],
                         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                        "token_uri": "https://oauth2.googleapis.com/token"
+                        "token_uri": "https://oauth2.googleapis.com/token",
+                        "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
                     }
                 }
                 flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
@@ -208,7 +209,7 @@ if menu == "이수증 업로드":
                     saved_folders = []
                     for course in courses:
                         course_folder_id = get_or_create_drive_folder(drive_service, course, parent_id=root_folder_id)
-                        new_filename = f"({course})_{name}.pdf"
+                        new_filename = f"({course})_{\n                        name}.pdf"
                         file_metadata = {
                             'name': new_filename,
                             'parents': [course_folder_id]
