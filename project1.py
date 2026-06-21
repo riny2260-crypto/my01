@@ -208,11 +208,63 @@ if menu == "이수증 업로드":
                     saved_folders = []
                     for course in courses:
                         course_folder_id = get_or_create_drive_folder(drive_service, course, parent_id=root_folder_id)
-                        new_filename = f"({course})_{name}.pdf"
+                        new_filename = f"({course})_{\n                        name}.pdf"
                         file_metadata = {
                             'name': new_filename,
                             'parents': [course_folder_id]
                         }
-                        media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype='application/pdf',
-                                                  resumable=True)
-                        drive_service.files().create(body=file_metadata, media_body=media).execute()
+                        media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype='application/pdf', resumable=True)
+                        drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+                        update_csv_ledger(drive_service, course_folder_id, course, info_data)
+                        saved_folders.append(course)
+
+                        if course in st.session_state.course_submissions:
+                            st.session_state.course_submissions[course].add(name)
+                        else:
+                            st.session_state.course_submissions["기타연수"].add(name)
+
+                    with st.expander(f"✅ {name} 선생님 클라우드 전송 완료 (추출 정보 확인)"):
+                        st.write(f"• 드라이브 저장 폴더: {', '.join(saved_folders)}")
+                        st.text(f"• 이수번호: {serial}\n• 연수기간: {period}\n• 이수시간: {itime}\n• 과정구분: {is_integrated}")
+
+                    success_count += 1
+
+                if success_count > 0:
+                    st.balloons()
+                    st.success(f"🎉 총 {success_count}명의 이수증이 구글 드라이브 클라우드로 안전하게 업로드 및 분류 장부 반영 완료되었습니다!")
+
+            except Exception as e:
+                st.error(f"⚠️ 구글 API 연결 중 오류 발생: {e}")
+
+elif menu == "미제출자 확인":
+    st.header("🔍 연수 과정별 미제출자 현황")
+    st.write("조회하고 싶은 연수 과정을 선택하시면 해당 교육의 미제출자 명단을 실시간 대조하여 보여줍니다.")
+
+    course_options = list(TRAINING_KEYWORDS.keys()) + ["기타연수"]
+    selected_course = st.selectbox("📚 확인하실 연수 과정을 선택하세요", course_options)
+
+    st.markdown(f"### 📋 '{selected_course}' 현황 확인")
+
+    if selected_course not in st.session_state.course_submissions:
+        st.session_state.course_submissions[selected_course] = set()
+
+    submitted = st.session_state.course_submissions[selected_course]
+    unsubmitted = [teacher for teacher in ALL_TEACHERS if teacher not in submitted]
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader(f"🟢 제출 완료 ({len(submitted)}명)")
+        if submitted:
+            for t in sorted(list(submitted)):
+                st.write(f"- {t} ✔️")
+        else:
+            st.write("_아직 이 연수 과정에 제출된 이수증이 없습니다._")
+
+    with col2:
+        st.subheader(f"🔴 미제출 선생님 ({len(unsubmitted)}명)")
+        if unsubmitted:
+            for t in sorted(unsubmitted):
+                st.write(f"- **{t}**")
+        else:
+            st.success(f"🎉 전원 제출! 모든 선생님이 '{selected_course}' 이수증을 제출하셨습니다!")
